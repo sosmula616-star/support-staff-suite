@@ -101,6 +101,21 @@ postgresql://support:support@localhost:5432/support?schema=public
 npm run db:push
 ```
 
+### Если база уже используется другим ботом
+
+`npm run db:push` управляет всей схемой целиком и предложит снести чужие таблицы. **Не соглашайся на `--accept-data-loss`** — вместо этого положи таблицы в отдельную схему Postgres, добавив к строке подключения `?schema=support`:
+
+```
+postgresql://user:pass@host:5432/dbname?schema=support
+```
+
+Тогда `db:push` создаст отдельное пространство имён и не тронет то, что лежит в `public`. Проверить, что получилось:
+
+```sql
+select table_schema, table_name from information_schema.tables
+where table_schema in ('public', 'support');
+```
+
 ---
 
 ## 6. Правила подсчёта
