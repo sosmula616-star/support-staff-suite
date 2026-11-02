@@ -1,0 +1,92 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SupportUser {
+  id                String   @id // Discord Snowflake ID
+  username          String
+  joinDate          DateTime @default(now())
+  isProbation       Boolean  @default(false)
+  probationEnd      DateTime?
+  isOnVacation      Boolean  @default(false)
+  vacationUntil     DateTime?
+  tokens            Int      @default(0)
+  warnings          Int      @default(0)
+  weeklyMisses      Int      @default(0)
+  totalVoiceMinutes Int      @default(0)
+  ticketsProcessed  Int      @default(0)
+  acceptedSwaps     Int      @default(0)
+  primeSlot         String?  // например, "20:00-21:00"
+  shieldUsed        Boolean  @default(false) // 🛡️ щит уже израсходован
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  voiceLogs    VoiceLog[]
+  explanations Explanation[]
+  swapsOut     SwapRequest[] @relation("SwapRequester")
+  swapsIn      SwapRequest[] @relation("SwapSubstitute")
+
+  @@index([primeSlot])
+}
+
+model VoiceLog {
+  id            String      @id @default(uuid())
+  userId        String
+  user          SupportUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime    @default(now())
+  hourSlot      String // "20:00-21:00"
+  minutesSpent  Int         @default(0)
+  isCompleted   Boolean     @default(false) // minutesSpent >= 47
+  isExtra       Boolean     @default(false) // ⚡ Молния (доп. ПТ)
+  isShield      Boolean     @default(false) // 🛡️ Щит (первый ПТ)
+  isVacation    Boolean     @default(false) // 🌴 Пальма (отпуск)
+  substitutedBy String? // Snowflake замещающего саппорта
+  manual        Boolean     @default(false) // засчитан вручную через /prime add
+
+  @@unique([userId, date, hourSlot])
+  @@index([date])
+  @@index([hourSlot])
+}
+
+model Explanation {
+  id         String      @id @default(uuid())
+  userId     String
+  user       SupportUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot       String
+  date       DateTime    @default(now())
+  text       String
+  sentToLogs Boolean     @default(false)
+}
+
+model SwapRequest {
+  id           String      @id @default(uuid())
+  requesterId  String
+  requester    SupportUser @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  substituteId String?
+  substitute   SupportUser? @relation("SwapSubstitute", fields: [substituteId], references: [id], onDelete: SetNull)
+  slot         String
+  date         DateTime
+  status       String      @default("open") // open | accepted | cancelled
+  createdAt    DateTime    @default(now())
+
+  @@index([status])
+}
+
+model VoiceSession {
+  id        String   @id @default(uuid())
+  userId    String
+  channelId String
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, channelId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}

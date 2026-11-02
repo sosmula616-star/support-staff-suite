@@ -1,0 +1,31 @@
+{
+  "name": "support-staff-suite",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Discord Bot + Discord Activity (Mini App) для стаффа саппортов",
+  "workspaces": [
+    "apps/bot",
+    "apps/activity"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "build": "npm run build --workspace=apps/activity && npm run build --workspace=apps/bot",
+    "dev:bot": "npm run dev --workspace=apps/bot",
+    "dev:activity": "npm run dev --workspace=apps/activity",
+    "deploy:commands": "npm run deploy:commands --workspace=apps/bot",
+    "start": "npm run start --workspace=apps/bot"
+  },
+  "devDependencies": {
+    "prisma": "^6.1.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0"
+  }
+}
